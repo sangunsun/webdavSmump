@@ -1,0 +1,10 @@
+{
+    "serviceport":8899,
+    "cakey":"server.key",
+    "cacrt":"server.crt",
+    "prefixdir":"/srv/dev-disk-by-uuid-797465A4560579FF/",
+    "users":[
+    {"username":"abc","password":"123","userpath":"minroot"},
+    {"username":"abc2","password":"123","userpath":"abc2"}
+    ]
+}
