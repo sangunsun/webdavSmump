@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/tidwall/gjson"
 	"golang.org/x/net/webdav"
@@ -15,6 +17,9 @@ import (
 var servicePort int64
 var prefixDir string
 var configFileName = "config.json"
+var jsonData = ""
+var readFileTicker = time.NewTicker(10 * time.Second)
+var readFileLock sync.Mutex
 
 func httpHandler(w http.ResponseWriter, req *http.Request) {
 
@@ -29,7 +34,17 @@ func httpHandler(w http.ResponseWriter, req *http.Request) {
 
 	// 验证用户名/密码
 
-	jsonData, _ := getStringFromFile(configFileName)
+	//用锁对多协程读写配置文件资源进行同步----------
+	select {
+	case <-readFileTicker.C:
+		readFileLock.Lock()
+		jsonData, _ = getStringFromFile(configFileName)
+		readFileLock.Unlock()
+	default:
+		readFileLock.Lock()
+		readFileLock.Unlock()
+	}
+
 	user := gjson.Get(jsonData, "users.#(username="+userName+")#")
 	//log.Println("user:", user)
 	if !user.Exists() {
@@ -69,7 +84,7 @@ func webDavLoad() {
 	   1. 读服务端口和目录前缀
 	   2. 开启web服务
 	*/
-	jsonData, _ := getStringFromFile(configFileName)
+	jsonData, _ = getStringFromFile(configFileName)
 	servicePort = gjson.Get(jsonData, "serviceport").Int()
 	prefixDir = gjson.Get(jsonData, "prefixdir").String()
 
@@ -106,7 +121,9 @@ func main() {
 	   1. 用一个go协程开启管理端口服务(具体服务程序放后期开发完善)
 	   2. 开启webdav服务
 	*/
-	 webDavLoad()
+
+	webDavLoad()
+
 }
 
 //从文件读入数据为字符串
