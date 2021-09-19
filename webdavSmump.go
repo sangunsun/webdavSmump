@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -53,15 +55,22 @@ func httpHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	//判断用户口令是否正确，口令可以直接存储，也可以以md5码存储，这里程序进行自动判断。
 	userPath := gjson.Get(user.String(), "#(password="+password+").userpath")
-	//log.Println("userpath:", userPath)
 	if !userPath.Exists() {
-		http.Error(w, "WebDAV: need authorized!", http.StatusUnauthorized)
-		//log.Println("wrong password")
-		return
+		passtemp := md5.Sum([]byte(password))
+		//不能直接md5.Sum([]byte(password))[:] ,会报slice of unaddressable value错误
+		userPath = gjson.Get(user.String(), "#(password="+hex.EncodeToString(passtemp[:])+").userpath")
+		if !userPath.Exists() {
+			http.Error(w, "WebDAV: need authorized!", http.StatusUnauthorized)
+			//log.Println("wrong password")
+			return
 
+		}
 	}
-	//log.Println(userPath)
+
+	//log.Println("userpath:", userPath)
+
 	webdavDir := webdav.Dir(prefixDir + userPath.String())
 	fs := &webdav.Handler{
 		Prefix:     "/" + userName, //http传过来的目录名必须和用户名相同
