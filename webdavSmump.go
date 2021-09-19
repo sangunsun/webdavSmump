@@ -56,6 +56,11 @@ func httpHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	//判断用户口令是否正确，口令可以直接存储，也可以以md5码存储，这里程序进行自动判断。
+	//防止把md5码当明码进行对比，不允许密码长度为32个字符
+	if len(password) == 32 {
+		http.Error(w, "WebDAV: need authorized!", http.StatusUnauthorized)
+		return
+	}
 	userPath := gjson.Get(user.String(), "#(password="+password+").userpath")
 	if !userPath.Exists() {
 		passtemp := md5.Sum([]byte(password))
