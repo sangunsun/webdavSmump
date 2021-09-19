@@ -3,8 +3,6 @@ a webdav server of mutil user mutil path
 
 + 因公司文件共享需求，寻找一个文件共享服务端软件，找了一圈发现现存的开源webdav服务软件极少实现了不同用户访问不同共享文件夹的。找现成的反倒不如自己写一个快，就写了本项目。原需求如下：
 
-
-[toc]
 ## 需求
 总体描述：需要一个多用户文件共享方案，以满足企业单位员工在单位和互联网上共享文件的需要
 
@@ -31,19 +29,18 @@ a webdav server of mutil user mutil path
 
 ### 服务软件选择
 
-seafile 可道云 群晖drive
-+ 淘汰原因：系统复杂，安装麻烦，有一定的学习曲线
-
 #### 第一选择：支持webdav多用户管理的服务软件
-+ webdav协议：http://www.webdav.org/specs/rfc2518.html
-+ go语言提供的webdav支持:golang.org/x/net/webdav，
-+ https://github.com/hacdias/webdav 这个二进制版本在树莓派多连接传输时会崩溃。
+seafile 可道云 群晖drive、https://github.com/hacdias/webdav（二进制版本在树莓派多连接传输时会崩溃）
++ 淘汰原因：系统复杂，安装麻烦，有一定的学习曲线或不稳定
 
 #### 第二选择：linux内置的sftp服务软件
 + 淘汰原因，用户管理和linux系统绑定，权限管理麻烦。
+
 #### 第三选择：定制开发webdav服务软件
 + 选择原因：代码小，实现快
 + golang自带的webdav开发包帮助文档：https://pkg.go.dev/golang.org/x/net/webdav
++ webdav协议：http://www.webdav.org/specs/rfc2518.html
++ go语言提供的webdav支持:golang.org/x/net/webdav
 
 ## 最终选择自已定制开发webdav服务软件即本系统。
 ## 系统特点
@@ -83,3 +80,8 @@ seafile 可道云 群晖drive
 5. 运行主程序文件
 6. 用任一webdav客户端软件访问本服务程序
 + **记得在用户访问前要把配置文件中userpath表示的目录创建好，否则用户访问的时候由于系统无法找到目录，会提示用户路径无法找到**
+
+### 已知webdav缺点：
+1. 客户端挂载问题：实测在linux下和在macos下，把webdav挂载成盘后，不管是命令行还是GUI拷贝文件都存在缓存问题，数据不能及时到达服务端。客户端提示文件拷贝完成，服务端看到文件大小还是0，即使umount掉盘数据还是不能及时到达服务器造成数据丢失。使用手机端的各种文件管理器、raidrive未发现丢失数据情况，同样一块远程共享，同时用webdav和smb共享，linux和macos下挂盘后拷贝数据，smb可把数据实时传给服务器，webdav就不行
+2. 延迟问题：实测把同样的服务端目录通过smb和webdav共享出来，用同一个客户端的两种协议访问，在文件夹内文件较多(nnn以上)时，smb反应较快，而webdav则有一到几秒的延迟时间才能显示文件列表。
+3. 在线播放问题(使用FE文件游览器)：和问题2一样的环境，在线播放nnnM的视频文件，smb基本能秒出，webdav则需要几秒的缓存时间。
