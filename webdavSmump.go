@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/tidwall/gjson"
@@ -21,7 +20,10 @@ var prefixDir string
 var configFileName = "config.json"
 var jsonData = ""
 var readFileTicker = time.NewTicker(10 * time.Second)
-var readFileLock sync.Mutex
+var chJsonStr = make(chan string)
+
+//既用于同步各协程，也用于限制并发协程数量，以防服务器被拖爆。
+var chHttpHandlerNums = make(chan bool, 5000)
 
 func httpHandler(w http.ResponseWriter, req *http.Request) {
 
@@ -36,16 +38,8 @@ func httpHandler(w http.ResponseWriter, req *http.Request) {
 
 	// 验证用户名/密码
 
-	//用锁对多协程读写配置文件资源进行同步----------
-	select {
-	case <-readFileTicker.C:
-		readFileLock.Lock()
-		jsonData, _ = getStringFromFile(configFileName)
-		readFileLock.Unlock()
-	default:
-		readFileLock.Lock()
-		readFileLock.Unlock()
-	}
+	//用信道对多协程读写配置文件资源进行同步----------
+	jsonData = <-chJsonStr
 
 	user := gjson.Get(jsonData, "users.#(username="+userName+")#")
 	//log.Println("user:", user)
@@ -135,8 +129,25 @@ func main() {
 	   1. 用一个go协程开启管理端口服务(具体服务程序放后期开发完善)
 	   2. 开启webdav服务
 	*/
-
+	go FanInJsonStr()
 	webDavLoad()
+
+}
+
+//通过信道为httpHandler函数提供配置文件数据
+//不能使用带缓冲的信道，否则配置文件已经修改变新了，还得等一些请求取走信道中的旧数据使用
+func FanInJsonStr() {
+	var jsonStr string
+	jsonStr, _ = getStringFromFile(configFileName)
+	for {
+		select {
+		case <-readFileTicker.C:
+			jsonStr, _ = getStringFromFile(configFileName)
+			chJsonStr <- jsonStr
+		default:
+			chJsonStr <- jsonStr
+		}
+	}
 
 }
 
