@@ -58,10 +58,10 @@ seafile 可道云 群晖drive、https://github.com/hacdias/webdav（二进制版
     "serviceport":8899,
     "cakey":"server.key",
     "cacrt":"server.crt",
-    "prefixdir":"/srv/dev-disk-by-uuid-797465A4560579FF/",
+    "prefixdir":"/srv/dev-disk-by-uuid-79746475560579FF/",
     "users":[
-    {"username":"abc","password":"123","userpath":"minroot"},
-    {"username":"abc2","password":"123","userpath":"abc2"}
+    {"username":"abc","password":"123","userpath":"minaaa"},
+    {"username":"abc2","password":"202cb962ac59075b964b07152d234b70","userpath":"abc2"}
     ]
 }
 ```
