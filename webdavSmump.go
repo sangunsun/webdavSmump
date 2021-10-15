@@ -17,7 +17,7 @@ import (
 
 var servicePort int64
 var prefixDir string
-var ffilename = flag.String("f", "config.json", "配置文件名")
+var ffilename = flag.String("f", "config.json", "配置文件名称")
 var configFileName string
 var readFileTicker = time.NewTicker(10 * time.Second)
 var chJsonStr = make(chan string)
