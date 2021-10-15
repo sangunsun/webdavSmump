@@ -10,16 +10,23 @@ import (
 	"os"
 	"strings"
 	"time"
-
+	"flag"
 	"github.com/tidwall/gjson"
 	"golang.org/x/net/webdav"
 )
 
 var servicePort int64
 var prefixDir string
-var configFileName = "config.json"
+var ffilename = flag.String("f", "config.json", "配置文件名")
+var configFileName string
 var readFileTicker = time.NewTicker(10 * time.Second)
 var chJsonStr = make(chan string)
+
+func init() {
+
+	flag.Parse()
+	configFileName = *ffilename
+}
 
 func httpHandler(w http.ResponseWriter, req *http.Request) {
 
