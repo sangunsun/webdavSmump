@@ -19,6 +19,7 @@ jobs:
         go-version: 1.15
 
     - name: Build
+      run: go -u
       run: go build -v ./...
 
     - name: Test
