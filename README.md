@@ -50,6 +50,7 @@ seafile 可道云 群晖drive、https://github.com/hacdias/webdav（二进制版
 4. 方便互联网和内部访问
 5. 可运行在windows、linux、树莓派、macos等几乎所有操作系统下(只要golang支持的操作系统都可以运行）
 6. 性能较好，文件传输输快，可同时传输多个文件。
+7. 在webdav中用户名(username),访问路径(URL),服务器上的文件路径(userpath)是一个多对多对多的关系,实现起来比较复杂。本项目暂把这个关系简化成了一对一对一的关系。
 
 ## 安装指南
 ### 配置文件说明：
@@ -70,7 +71,7 @@ seafile 可道云 群晖drive、https://github.com/hacdias/webdav（二进制版
 + cacrt:公钥证书存取路径
 + prefixdir:服务器端共享文件夹的前缀，和userpath合起来组成共享给某个用户的文件夹在服务器上的绝对路径
 + users:用户集合，每一行对应一个用户描述，分别是用户名、用户口令(可以是明文也可以放置经md5哈稀后的口令)、服务器上分配给用户的共享文件夹名
-+ webdav的存取路径名和用户名一致(即webdav的访问路径是形如https://xx.xx.xx.xx:8899/username)，配置文件不再体现。
++ webdav的存取路径名和用户名一致(即webdav的访问路径是形如https://xx.xx.xx.xx:8899/username) ，配置文件不再体现。
 
 ### 安装过程
 1. 下载并编译主程序文件
@@ -78,7 +79,7 @@ seafile 可道云 群晖drive、https://github.com/hacdias/webdav（二进制版
 3. 在同一目录内放置供https通讯使用的公钥文件和私钥文件(没公钥文件和私钥文件也没关系，系统会转为http方式运行)
 4. 按实际情况编辑好配置文件config.json并保存
 5. 运行主程序文件
-6. 用任一webdav客户端软件访问本服务程序
+6. 用任一webdav客户端软件访问本服务程序(直接用浏览器访问会返回"Method Not Allowed",另外windows下的"添加一个网络位置"功能也不能正常访问)
 + **记得在用户访问前要把配置文件中userpath表示的目录创建好，否则用户访问的时候由于系统无法找到目录，会提示用户路径无法找到**
 
 ### 已知webdav缺点：
