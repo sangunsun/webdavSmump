@@ -4,7 +4,7 @@ FROM golang:1.17 AS builder
 WORKDIR /app
 COPY *.go ./
 # RUN go mod download
-RUN go build -o /webdavSmump
+RUN go mod init testmod && go mod tidy && go get -u && CGO_ENABLED=0 go build -v webdavSmump.go
 # 镜像是基于alpine
 FROM alpine
 # LABLE 给镜像添加元数据
