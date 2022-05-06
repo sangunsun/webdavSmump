@@ -1,5 +1,12 @@
+# build stage
+FROM golang:1.17 AS builder
+
+WORKDIR /app
+COPY *.go ./
+# RUN go mod download
+RUN go mod init testmod && go mod tidy && go get -u && CGO_ENABLED=0 go build -v webdavSmump.go
 # 镜像是基于alpine
-FROM ubuntu:latest
+FROM alpine
 # LABLE 给镜像添加元数据
 # MAINTAINER 维护者信息
 LABEL maintainer="sagit"
@@ -8,7 +15,7 @@ RUN mkdir /config
 # 设置固定的项目路径
 ENV WORKDIR /
 # 添加执行文件
-COPY webdavSmump_linux64 /webdav
+COPY --from=builder /app/webdavSmump /webdav
 COPY entrypoint.sh /entrypoint.sh
 # RUN 指令将在当前镜像基础上执行指定命令
 # 添加应用可执行文件，并设置执行权限
