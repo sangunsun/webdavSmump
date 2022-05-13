@@ -107,25 +107,36 @@ func webDavLoad() {
 	s_mux.HandleFunc("/", httpHandler)
 
 	dav_addr := fmt.Sprintf(":%v", servicePort)
-	log.Println("webDav Server run ", dav_addr)
+	log.Println("webDav Server run port", dav_addr)
 
 	//读ca证书的公钥、私钥，如读成功，启动https服务，如果读不成功启动http服务
 	caKey := gjson.Get(jsonData, "cakey")
 	caCrt := gjson.Get(jsonData, "cacrt")
-	log.Println(caKey.String(), caCrt.String())
+
 	if !caKey.Exists() || !caCrt.Exists() {
 		log.Println("webDav server run http mode")
 		//http.ListenAndServe是阻塞语句，不出错，后面的语句不会执行
 		err := http.ListenAndServe(dav_addr, s_mux)
 		if err != nil {
-			log.Println("webDav server run error:", err)
+			log.Println("webDav server run http mod error:", err)
 		}
-	} else {
+	} else if !checkFileIsExist(caKey.String()) || !checkFileIsExist(caCrt.String()){
+ 		log.Println("webDav server run http mode")
+		//http.ListenAndServe是阻塞语句，不出错，后面的语句不会执行
+		err := http.ListenAndServe(dav_addr, s_mux)
+		if err != nil {
+			log.Println("webDav server run http mod error:", err)
+		}
+   
+    
+    
+    } else {
+        log.Println("caName is: ",caKey.String(), caCrt.String())
 		log.Println("webDav server run  https mode")
 		//http.ListenAndServeTLS是阻塞语句，不出错，后面的语句不会执行
 		err := http.ListenAndServeTLS(dav_addr, caCrt.String(), caKey.String(), s_mux)
 		if err != nil {
-			log.Println("webDav server run error:", err)
+			log.Println("webDav server run https mod error:", err)
 		}
 	}
 
@@ -172,4 +183,15 @@ func getStringFromFile(fileName string) (string, error) {
 		return "", err
 	}
 	return string(fd), nil
+}
+
+/**
+ * 判断文件是否存在  存在返回 true 不存在返回false
+ */
+func checkFileIsExist(filename string) bool {
+	var exist = true
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		exist = false
+	}
+	return exist
 }
