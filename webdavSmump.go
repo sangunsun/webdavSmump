@@ -13,6 +13,7 @@ import (
 	"flag"
 	"github.com/tidwall/gjson"
 	"golang.org/x/net/webdav"
+//    "context"
 )
 
 var servicePort int64
@@ -82,6 +83,13 @@ func httpHandler(w http.ResponseWriter, req *http.Request) {
 
 	//log.Println("fs.Prefix:", fs.Prefix,"localpath:", webdavDir)
 	if strings.HasPrefix(req.RequestURI, fs.Prefix) {
+
+        //下面处理让浏览器也可以在线查看文件(原来浏览器无法查看webdav文件)=====
+        if req.Method == "GET" && handleDirList(prefixDir, w, req) {
+            return
+        }
+        //=====================================================================
+
 		fs.ServeHTTP(w, req)
 		//log.Println("fs call")
 		return
@@ -194,4 +202,32 @@ func checkFileIsExist(filename string) bool {
 		exist = false
 	}
 	return exist
+}
+
+func handleDirList(prefixDir string,  w http.ResponseWriter, req *http.Request) bool {
+    f, err := os.OpenFile( prefixDir + req.URL.Path, os.O_RDONLY, 0)
+    if err != nil {
+        log.Println("dir Open file err:=",err,req.URL.Path)
+        return false
+    }
+    defer f.Close()
+    if fi, _ := f.Stat(); fi != nil && !fi.IsDir() {
+        return false
+    }
+    dirs, err := f.Readdir(-1)
+    if err != nil {
+        log.Print(w, "Error reading directory", http.StatusInternalServerError)
+        return false
+    }
+    w.Header().Set("Content-Type", "text/html; charset=utf-8")
+    fmt.Fprintf(w, "<pre>\n")
+    for _, d := range dirs {
+        name := d.Name()
+        if d.IsDir() {
+            name += "/"
+        }
+        fmt.Fprintf(w, "<a href=\"%s\">%s</a>\n", name, name)
+    }
+    fmt.Fprintf(w, "</pre>\n")
+    return true
 }
