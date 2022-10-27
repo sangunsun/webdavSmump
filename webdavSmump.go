@@ -85,7 +85,7 @@ func httpHandler(w http.ResponseWriter, req *http.Request) {
 	if strings.HasPrefix(req.RequestURI, fs.Prefix) {
 
         //下面处理让浏览器也可以在线查看文件(原来浏览器无法查看webdav文件)=====
-        if req.Method == "GET" && handleDirList(prefixDir, w, req) {
+        if req.Method == "GET" && handleDirList(prefixDir, w, req,userPath.String()) {
             return
         }
         //=====================================================================
@@ -204,8 +204,13 @@ func checkFileIsExist(filename string) bool {
 	return exist
 }
 
-func handleDirList(prefixDir string,  w http.ResponseWriter, req *http.Request) bool {
-    f, err := os.OpenFile( prefixDir + req.URL.Path, os.O_RDONLY, 0)
+func handleDirList(prefixDir string,  w http.ResponseWriter, req *http.Request,userPath string) bool {
+    path := req.URL.Path[strings.Index(req.URL.Path,"/")+1:]
+
+    path = path[strings.Index(path,"/"):]
+    filePath := prefixDir + userPath + path
+
+    f, err := os.OpenFile( filePath, os.O_RDONLY, 0)
     if err != nil {
         log.Println("dir Open file err:=",err,req.URL.Path)
         return false
