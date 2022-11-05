@@ -231,7 +231,7 @@ func handleDirList(prefixDir string,  w http.ResponseWriter, req *http.Request,u
         if d.IsDir() {
             name += "/"
         }
-        fmt.Fprintf(w, "<a href=\"%s\">%s</a>\n", name, name)
+        fmt.Fprintf(w, "<a href=\"%s\">%s</a></br>\n", name, name)
     }
     fmt.Fprintf(w, "</pre>\n")
     return true
