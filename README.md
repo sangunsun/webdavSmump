@@ -87,5 +87,58 @@ seafile 可道云 群晖drive、https://github.com/hacdias/webdav（二进制版
 2. 延迟问题：实测把同样的服务端目录通过smb和webdav共享出来，用同一个客户端的两种协议访问，在文件夹内文件较多(nnn以上)时，smb反应较快，而webdav则有一到几秒的延迟时间才能显示文件列表。
 3. 在线播放问题(使用FE文件游览器)：和问题2一样的环境，在线播放nnnM的视频文件，smb基本能秒出，webdav则需要几秒的缓存时间。
 
+### webdav挂载
++ webdav挂载：davfs2,根据官方文档，只有root用户才能挂载，挂载后盘的所有者是root，造成普通用户没有写权限，需要chmod 777 dir修改目录权限后，普通用户才能正常访问(已验证)。
++ 已有解决办法如下：
+```
+sudo mount -t davfs -o uid=myUser -o gid=myUser https://example.org/remote.php/webdav/ /home/myUser/myDir/
+```
+> 1. mount -t davfs https://abc.com:8080/dav/ /mnt/webdav
+> 2. mount -t davfs http(s)://addres:<port>/path /mount/point (官方文档提供)
+> 3. 官方文档：https://wiki.archlinux.org/title/Davfs2
+> 4. 配置文件:/etc/davfs2/davfs2.conf,
+
+> 1. 遇到一个问题，使用davfs2挂载远程盘后，使用dd测试写盘速度，1G的文件瞬间写完成，但是到服务器上看，文件是0字节，umount盘后，提示在写缓存，以为稳了，umont成功后，到服务器看文件还是0字节。然后再挂载盘，想通过客户朵看远程文件情况，结果就一直卡，卡好后到服务器一看，文件已经是1G了。如果davfs2是这样的处理逻辑，那是不是很容易造成文件丢失？？？
+> 2. 使用RaiDrive挂载盘，在拷贝大文件的时候，服务端的数据是实时增长的。
+> 2. 这个结果说明davfs2并不是一个靠谱的挂载软件，RaiDrive是一个靠谱的挂载软件；同时说明服务端的webdav服务程序没问题，上述问题就是davfs2造成的。
+
+> 挂载webdav的另一种方法使用wdfs - webdav filesystem for fuse，见：https://serverfault.com/questions/391717/mounting-webdav-as-user-no-sudo
+
++ 开机自动挂载(该方法还未验证)
+> 1. 启用 davfs2 用户锁:将配置文件中use_locks前面的#去掉，并将1改为0，保存退出可重启自动挂载。
+> 2. 不用每次挂载输用户名密码(挂载自动提供用户名密码)：修改 /etc/davfs2/secrets,末尾增加形如下面一行 https://abc.com:8080/dav/ userxxx passwordxxxx(该方法可用性已验证)
+> 3. 开机自动挂载：编辑/etc/rc.local，在文件末尾加一行: mount -t davfs https://abc.com:8080/dav/ /mnt/webdav
++ webdav挂载：fusedav
+> fusedav https://webdav链接 /home/test/ -u (你的账户名) -p (你的密码)
+
++ 又一个挂载软件Rclone，一个使用指南：https://www.moewah.com/archives/876.html
+
+#### 手机版wps挂载webdav说明
++ https://blog.jianguoyun.com/?p=2576
+
+#### windows挂载webdav
++ windows下默认只支持https方式的webdav挂载，并且要求是可信任的证书，在局域网中这样使用就很麻烦，使用http方式更合适。所以windows下挂载webdav共三步
+
+1. 开启服务:windows下webdav的客户端程序是webclient服务，在电脑服务中启动次服务，并设置为自动启动运行。
+
+2. 修改注册表
+修改注册表使得WIN同时支持http和https：
+
+    > 定位到
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WebClient\Parameters
+把BasicAuthLevel 值改成2，即同时支持http和https，默认只支持https，
+然后重启服务：
+
++ 映射磁盘
+    >使用windows的添加一个网络位置功能
+填写正确的连接加端口号，共享目录名可以不填写，也可以填写，如果填写千万不要填写错了。
+
++ windows自带客户端无法下载webdav服务器上大于50M文件的问题
+> https://support.microsoft.com/zh-cn/topic/%E4%BB%8E-web-%E6%96%87%E4%BB%B6%E5%A4%B9%E4%B8%8B%E8%BD%BD%E5%A4%A7%E4%BA%8E-50000000-%E5%AD%97%E8%8A%82%E7%9A%84%E6%96%87%E4%BB%B6%E6%97%B6%E5%87%BA%E7%8E%B0%E6%96%87%E4%BB%B6%E5%A4%B9%E5%A4%8D%E5%88%B6%E9%94%99%E8%AF%AF%E6%B6%88%E6%81%AF-815e2949-0f56-ec25-db7d-b6d860a31f77
++ windows客户端最大只能下载4G以下文件的问题？？？
+ 
+#### 使用RaiDrive挂载
+    + 使用RaiDrive挂载可在windows下挂载大多数协议的网盘，包括webdav、ftp等
+ 
 ### TODO
 1. 拟增加浏览器查看markdown文件时，直接把markdown文档.md文档渲染显示功能。
